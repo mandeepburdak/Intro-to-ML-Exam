@@ -1,6 +1,10 @@
 library(tidyverse)
 library(ggplot2)
-wine = read.csv("../data/wine.csv") 
+library(caret)
+library(flexclust)
+library(foreach)
+
+wine = read.csv("../STA380/data/wine.csv") 
 wine_chems=wine[,c(1:11)]
 wine_chems = scale(wine_chems, center=TRUE, scale=TRUE)	
 # a look at the correlation matrix
@@ -42,7 +46,7 @@ loadings_summary %>%
   select(Question, PC2) %>%
   arrange(desc(PC2))
 
-wine = merge(wine, PCApilot$x[,1:2], by="row.names")
+wine = merge(wine, PCAwine$x[,1:2], by="row.names")
 wine = rename(wine, Show = Row.names)
 
 #Let's plot the wines with their colors
@@ -51,30 +55,15 @@ ggplot(wine, aes(x = PC1, y = PC2, color = color)) +
 
 wine_c_data=wine[,c('PC1','PC2')]
 
-library(flexclust)
-library(foreach)
-
-# Load, center and scale the data
-# cars = read.csv('../data/cars.csv', header=TRUE)
-# X = cars[,-(1:9)]
-# X = scale(X, center=TRUE, scale=TRUE)
-
-# Extract the centers and scales from the rescaled data (which are named attributes)
-mu = attr(wine_c_data,"scaled:center")
-sigma = attr(wine_c_data,"scaled:scale")
-
-# Run k-means with 6 clusters and 25 re-starts
-clust1 = kmeans(wine_c_data, 2, nstart=1)
+# Run k-means with 2 clusters
+clust1 = kmeans(wine_c_data, 2, nstart=25)
 clust1$totss
 clust1$betweenss
 clust1$withinss
 clust1$size
 
-# Load the required library
-library(ggplot2)
-
 #Since we have more white wines in the data set, let's name bigger cluster as white
-wine_c_data$cc = ifelse(clust1$cluster<=1,"white","red")
+wine_c_data$cc = ifelse(clust1$cluster==which.max(clust1$size),"white","red")
 
 summary(clust1$cluster)
 # Create the scatter plot
@@ -82,5 +71,4 @@ ggplot(wine_c_data, aes(x = PC1, y = PC2, color = cc)) +
   geom_point(size = 3)  +
   labs(title = "Wines with their predicted Color Categories", x = "PC1", y = "PC2")
 
-library(caret)
 confusionMatrix(as.factor(wine_c_data$cc),as.factor(wine$color))
