@@ -10,7 +10,7 @@ wine_chems = scale(wine_chems, center=TRUE, scale=TRUE)
 # a look at the correlation matrix
 cor(wine_chems)
 
-# a quick heatmap visualization
+# a quick heatmap visualizations
 ggcorrplot::ggcorrplot(cor(wine_chems))
 
 # looks a mess -- reorder the variables by hierarchical clustering
