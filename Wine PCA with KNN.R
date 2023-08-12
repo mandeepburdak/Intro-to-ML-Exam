@@ -49,9 +49,15 @@ loadings_summary %>%
 wine = merge(wine, PCAwine$x[,1:2], by="row.names")
 wine = rename(wine, Show = Row.names)
 
+wine$quality_c = as.factor(ifelse(wine$quality>6,1,0))
 #Let's plot the wines with their colors
 ggplot(wine, aes(x = PC1, y = PC2, color = color)) +
-  geom_point(size = 3) 
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Color Categories", x = "PC1", y = "PC2")
+
+ggplot(wine, aes(x = PC1, y = PC2, color = quality_c)) +
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Quality Ratings(1 means 7 or higher)", x = "PC1", y = "PC2")
 
 wine_c_data=wine[,c('PC1','PC2')]
 

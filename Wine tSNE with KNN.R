@@ -30,9 +30,15 @@ plot(tsne_result$Y, col = "blue", pch = 20, main = "t-SNE Result")
 tSNEwine = tsne_result$Y %>%
   as.data.frame()
 
+tSNEwine$quality_c = as.factor(ifelse(wine_d$quality>6,1,0))
 #Let's plot the wines with their colors
 ggplot(tSNEwine, aes(x = V1, y = V2, color = wine_d$color)) +
-  geom_point(size = 3) 
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Color Categories", x = "V1", y = "V2")
+
+ggplot(tSNEwine, aes(x = V1, y = V2, color = quality_c)) +
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Quality Ratings(1 means 7 or higher)", x = "PC1", y = "PC2")
 
 wine_c_data=tSNEwine[,c('V1','V2')]
 
