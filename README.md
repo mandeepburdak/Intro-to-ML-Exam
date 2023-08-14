@@ -8,7 +8,7 @@ Throughout the project, we explored different types of questions and problems, e
 # Exercise Answers:
 [Question 1 and 2: Probability practice & Wrangling the Billboard Top 100](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Question%201%20and%202.ipynb)
 
-[Question3: Visual story telling part 1: green buildings](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Visual%20Story%20Telling%20Part%201-%20Green%20Buildings.ipynb)
+[Question 3: Visual story telling part 1: green buildings](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Visual%20Story%20Telling%20Part%201-%20Green%20Buildings.ipynb)
 
 [Question 4: Visual story telling part 2: Capital Metro data](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Visual%20Story%20Part%202.ipynb)
 
