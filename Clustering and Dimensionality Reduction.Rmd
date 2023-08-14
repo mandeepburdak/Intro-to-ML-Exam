@@ -8,55 +8,77 @@ date: "2023-08-11"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, include=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(caret)
 library(flexclust)
 library(foreach)
+```
 
+```{r, echo=FALSE}
 wine = read.csv("../STA380/data/wine.csv") 
 wine_chems=wine[,c(1:11)]
 wine_chems = scale(wine_chems, center=TRUE, scale=TRUE)	
-# a look at the correlation matrix
-cor(wine_chems)
+```
 
+### Let's start with a look at the correlation heatmap
+
+```{r, echo=FALSE}
 # a quick heatmap visualizations
 ggcorrplot::ggcorrplot(cor(wine_chems))
+```
 
+### Let's order them according to their correlations
+
+```{r, echo=FALSE}
 # looks a mess -- reorder the variables by hierarchical clustering
 ggcorrplot::ggcorrplot(cor(wine_chems), hc.order = TRUE)
+```
 
+### We can see a couple of obvious strong correlations
+Density and alcohol seem to be negatively correlated, which is expected since alcohol is less dense than water, and increasing alcohol will lead to decrease in quality.
+
+Density and residual sugar seem to be positively correlated, again expected as addign sugar will make a liquid more dense.
+
+```{r, echo=FALSE}
 # Now look at PCA of the (average) survey responses.  
 # This is a common way to treat survey data
 PCAwine = prcomp(wine_chems, scale=FALSE,rank. = 2)
+```
 
+
+```{r, echo=FALSE, include=FALSE}
 ## variance plot
 plot(PCAwine)
 summary(PCAwine)
+```
 
+
+### Lets do PCA and reduce the predictors to just 2 Principal Componets
+
+```{r, echo=FALSE}
 # first few pcs
 # try interpreting the loadings
 # the question to ask is: "which variables does this load heavily on (positive and negatively)?"
 round(PCAwine$rotation[,1:2],2) 
+```
 
+
+```{r, echo=FALSE}
 # create a tidy summary of the loadings
 loadings_summary = PCAwine$rotation %>%
   as.data.frame() %>%
   rownames_to_column('Question')
+```
 
-# This seems to pick out characteristics of
-# sulfury vs vinegary wines?
-loadings_summary %>%
-  select(Question, PC1) %>%
-  arrange(desc(PC1))
+PC1 seems to pick out characteristics of sulfury vs vinegary wines.
 
-# this just seems to load positively on alcohol
-# which is negatively correlated with density
-loadings_summary %>%
-  select(Question, PC2) %>%
-  arrange(desc(PC2))
+PC2 just seems to load positively on alcohol which is negatively correlated with density.
 
+### Let's plot the wines based on these principal components and color them with their actul colors
+
+```{r, echo=FALSE}
 wine = merge(wine, PCAwine$x[,1:2], by="row.names")
 wine = rename(wine, Show = Row.names)
 
@@ -66,29 +88,135 @@ ggplot(wine, aes(x = PC1, y = PC2, color = color)) +
   geom_point(size = 3) +
   labs(title = "Wines with their Actual Color Categories", x = "PC1", y = "PC2")
 
+```
+
+They seem to be well separated
+
+### What about quality though, Let's simplify the plot by converting quality into a binary variable where 1 means high quality ie quality >=7
+```{r, echo=FALSE}
+
+
 ggplot(wine, aes(x = PC1, y = PC2, color = quality_c)) +
   geom_point(size = 3) +
   labs(title = "Wines with their Actual Quality Ratings(1 means 7 or higher)", x = "PC1", y = "PC2")
 
+```
+
+Looks like PCA didn't pick on quality rather color of wines
+
+### If we cluster the wines will they cluster into their own colors?
+
+```{r, echo=FALSE}
 wine_c_data=wine[,c('PC1','PC2')]
 
 # Run k-means with 2 clusters
 clust1 = kmeans(wine_c_data, 2, nstart=25)
-clust1$totss
-clust1$betweenss
-clust1$withinss
-clust1$size
+
+#Since we have more white wines in the data set, let's name bigger cluster as white
+wine_c_data$cc = ifelse(clust1$cluster==which.max(clust1$size),"white","red")
+
+#summary(clust1$cluster)
+# Create the scatter plot
+ggplot(wine_c_data, aes(x = PC1, y = PC2, color = cc)) +
+  geom_point(size = 3)  +
+  labs(title = "Wines with their predicted Color Categories", x = "PC1", y = "PC2")
+```
+
+### Seems like they do. but how well, let's take a look at the confusion matrix
+
+```{r, echo=FALSE}
+confusionMatrix(as.factor(wine_c_data$cc),as.factor(wine$color))
+```
+
+### Wow 98% of the wines did find their own kind
+
+## Let's try the same using tSNE now
+
+```{r, include= FALSE}
+library(tidyverse)
+library(ggplot2)
+library(Rtsne)
+library(flexclust)
+library(foreach)
+library(caret)
+```
+
+
+```{r, include=FALSE}
+set.seed(1)
+wine = read.csv("../STA380/data/wine.csv") 
+wine_d=wine[!duplicated(wine[, 1:11]), ]
+wine_chems=wine_d[,c(1:11)]
+
+# Perform t-SNE
+tsne_result <- Rtsne(wine_chems, perplexity = 50, dims = 2, verbose = TRUE)
+```
+
+### Let's see what our tSNE plot looks like with 2 components
+```{r,echo=FALSE}
+# Plot the t-SNE result
+plot(tsne_result$Y, col = "blue", pch = 20, main = "t-SNE Result")
+
+# create a tidy summary of the loadings
+tSNEwine = tsne_result$Y %>%
+  as.data.frame()
+
+tSNEwine$quality_c = as.factor(ifelse(wine_d$quality>6,1,0))
+```
+
+### Let's plot the wines with their actual colors
+
+```{r,echo=FALSE}
+#Let's plot the wines with their colors
+ggplot(tSNEwine, aes(x = V1, y = V2, color = wine_d$color)) +
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Color Categories", x = "V1", y = "V2")
+```
+
+There seems to be some differentiation but colors are bleeding into each other
+
+### What about quality though
+
+```{r,echo=FALSE}
+ggplot(tSNEwine, aes(x = V1, y = V2, color = quality_c)) +
+  geom_point(size = 3) +
+  labs(title = "Wines with their Actual Quality Ratings(1 means 7 or higher)", x = "V1", y = "V2")
+```
+
+Muddy again.
+
+### Let's try K-means clustering to see if the machine can pick out the 2 colors
+
+```{r,echo=FALSE}
+wine_c_data=tSNEwine[,c('V1','V2')]
+
+# Run k-means with 2 clusters
+clust1 = kmeans(wine_c_data, 2,nstart=25)
+
+which.max(clust1$size)
 
 #Since we have more white wines in the data set, let's name bigger cluster as white
 wine_c_data$cc = ifelse(clust1$cluster==which.max(clust1$size),"white","red")
 
 summary(clust1$cluster)
 # Create the scatter plot
-ggplot(wine_c_data, aes(x = PC1, y = PC2, color = cc)) +
+ggplot(wine_c_data, aes(x = V1, y = V2, color = cc)) +
   geom_point(size = 3)  +
-  labs(title = "Wines with their predicted Color Categories", x = "PC1", y = "PC2")
+  labs(title = "Wines with their predicted Color Categories", x = "V1", y = "V2")
+```
 
-confusionMatrix(as.factor(wine_c_data$cc),as.factor(wine$color))
+Seems like K means doesn't know it's wines this time.
+
+### How bad is the accuracy?
+
+```{r,echo=FALSE}
+confusionMatrix(as.factor(wine_c_data$cc),as.factor(wine_d$color))
 
 ```
 
+A bare 42%, I won't be trusting tSNE + K Means for my wines, for sure.
+
+
+### In conclusion PCA did pretty well on picking out the colors of the wines, but not on the quality.
+
+### tSNE on the other hand did bad on both of them, and picked up on some yet known differentiator between the wines.
