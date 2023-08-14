@@ -6,7 +6,7 @@ Throughout the project, we explored different types of questions and problems, e
   2. Krittika Deshwal (EID: kd29275)
   3. Mandeep Burdak (EID: msb4384)
 # Exercise Answers:
-[Question 1 & 2: Probability practice & Wrangling the Billboard Top 100] (https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Question%201%20and%202.ipynb)
+[Question 1 & 2: Probability practice & Wrangling the Billboard Top 100](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Question%201%20and%202.ipynb)
 
 [Question3: Visual story telling part 1: green buildings](https://github.com/mandeepburdak/Intro-to-ML-Exam/blob/main/Visual%20Story%20Telling%20Part%201-%20Green%20Buildings.ipynb)
 
