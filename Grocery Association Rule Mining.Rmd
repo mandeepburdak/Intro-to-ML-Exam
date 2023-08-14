@@ -1,0 +1,72 @@
+---
+title: "Grocery Association Rule Mining"
+output: pdf_document
+date: "2023-08-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r, echo=FALSE, include=FALSE}
+library(tidyverse)
+library(igraph)
+library(arules)
+library(arulesViz)
+```
+
+
+
+```{r, echo=FALSE}
+g_raw = read.csv("/Users/mandeep/Documents/GitHub/STA380/data/groceries.txt",header=FALSE)
+long_df <- g_raw %>%
+  mutate(cart_id = row_number()) %>%
+  pivot_longer(cols = starts_with("V"), names_to = "item_position", values_to = "item_name") %>%
+  arrange(cart_id, as.numeric(gsub("V", "", item_position))) %>%
+  select(-item_position)
+
+x=long_df$item_name != ""
+long_df<-subset(long_df,x)
+```
+
+
+### Let's take a look at the summary of the grocery carts
+
+```{r, echo=FALSE}
+playtrans = as(split(long_df$item_name, long_df$cart_id), "transactions")
+summary(playtrans)
+```
+Whole milk and Other Vegetables seems to be the most common items in people's carts.
+
+
+```{r, echo=FALSE, include=FALSE}
+musicrules = apriori(playtrans, 
+	parameter=list(support=.005, confidence=.1, maxlen=4))
+```
+
+### Let's find some association rules, since the dataset is small, let's be lax with our threshold.Let's take the thresholds at 0.5% support, 10% confidence, and a max length of 4
+
+
+### We found 118 rules, let's take a look at the strongest ones with lift atleast at 3
+```{r, echo=FALSE}
+inspect(subset(musicrules, lift > 3))
+```
+
+## Inference
+### The first set of people (rule 1-4) seem to be buying Onion, Veggies and Beef for dinner
+### The next set seems to be buying Fruits in bulk
+### Interestingly Whole milk does not appear in these strongest of rules.
+
+
+```{r, echo=FALSE, include=FALSE}
+playlists_graph = associations2igraph(subset(musicrules, lift>1), associationsAsNodes = FALSE)
+igraph::write_graph(playlists_graph, file='groceries.graphml', format = "graphml")
+```
+
+### Let's try to plot our network now
+![Rules Network](/Users/mandeep/Documents/GitHub/Intro-to-ML-Exam/Grocery_graph.png)
+
+### Whole Milk appears in a lot of rules, more than any other item, but the rules do not seem to be that strong.
+
